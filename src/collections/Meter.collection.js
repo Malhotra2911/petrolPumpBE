@@ -120,6 +120,39 @@ class Meter {
                     }
                 }
             );
+                
+            const previousData = await TblMeterReading.findOne({
+                where : {
+                    id : id - 1
+                }
+            });
+
+            const oneMorePreviousData = await TblMeterReading.findOne({
+                where : {
+                    id : id - 2
+                }
+            });
+
+            if(previousData) {
+                const updatedData = await TblMeterReading.update(
+                    {
+                        ClosingStock : previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing),
+                        PhysicalStock : Stock,
+                        StockLossGain : Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        Nozzle1Diff : Nozzle1 - previousData.Nozzle1,
+                        Nozzle2Diff : Nozzle2 - previousData.Nozzle2,
+                        TotalNozzleSales : (Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2),
+                        ActualNozzleSales : ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing,
+                        CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
+                    },
+                    {
+                        where : {
+                            id : id - 1
+                        }
+                    }
+                )
+            }
             return data;  
         } catch (error) {
             console.log(error);
@@ -257,6 +290,39 @@ class Meter {
                     }
                 }
             );
+
+            const previousData = await TblMeterReadingDiesel.findOne({
+                where : {
+                    id : id - 1
+                }
+            });
+
+            const oneMorePreviousData = await TblMeterReadingDiesel.findOne({
+                where : {
+                    id : id - 2
+                }
+            });
+
+            if(previousData) {
+                const updatedData = await TblMeterReadingDiesel.update(
+                    {
+                        ClosingStock : previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing),
+                        PhysicalStock : Stock,
+                        StockLossGain : Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        Nozzle1Diff : Nozzle1 - previousData.Nozzle1,
+                        Nozzle2Diff : Nozzle2 - previousData.Nozzle2,
+                        TotalNozzleSales : (Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2),
+                        ActualNozzleSales : ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing,
+                        CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
+                    },
+                    {
+                        where : {
+                            id : id - 1
+                        }
+                    }
+                )
+            }
             return data;
         } catch (error) {
             console.log(error);
