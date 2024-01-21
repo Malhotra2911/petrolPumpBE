@@ -1,5 +1,6 @@
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
+const sequelize = require("../db/db-connection");
 
 const TblMeterReading = db.meterReading;
 const TblMeterReadingDiesel = db.meterReadingDiesel;
@@ -32,11 +33,11 @@ class Meter {
                 }
             });
 
-            const oneMorePreviousData = await TblMeterReading.findOne({
-                where : {
-                    id : data.id - 2
-                }
-            });
+            // const oneMorePreviousData = await TblMeterReading.findOne({
+            //     where : {
+            //         id : data.id - 2
+            //     }
+            // });
 
             if(previousData) {
                 const updatedData = await TblMeterReading.update(
@@ -44,12 +45,12 @@ class Meter {
                         ClosingStock : previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing),
                         PhysicalStock : Stock,
                         StockLossGain : Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
-                        CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        // CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
                         Nozzle1Diff : Nozzle1 - previousData.Nozzle1,
                         Nozzle2Diff : Nozzle2 - previousData.Nozzle2,
                         TotalNozzleSales : (Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2),
                         ActualNozzleSales : ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing,
-                        CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
+                        // CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
                     },
                     {
                         where : {
@@ -73,21 +74,107 @@ class Meter {
             const getYear = new Date().getFullYear();
             searchObj.Date = { [Op.between] : [`${getYear}-${getMonth}-01`, `${getYear}-${getMonth}-31`] }
             if (fromDate && toDate) {
-                searchObj.Date = { [Op.between] : [fromDate, toDate] }
-            }
-            if (id) {
-                const data = await TblMeterReading.findAll({
-                    where : {
-                        id : id
-                    },
-                    order : [["Date", "ASC"]]
-                });
+                const [data] = await sequelize.query(`SELECT
+                    id,
+                    Date,
+                    Time,
+                    Density,
+                    Dip,
+                    WaterDip,
+                    Stock,
+                    OpeningStock,
+                    Receipt,
+                    TotalStock,
+                    ClosingStock,
+                    PhysicalStock,
+                    StockLossGain,
+                    SUM(COALESCE(StockLossGain, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummLossGain,
+                    Nozzle1,
+                    Nozzle2,
+                    Nozzle1Diff,
+                    Nozzle2Diff,
+                    TotalNozzleSales,
+                    Testing,
+                    ActualNozzleSales,
+                    SUM(COALESCE(ActualNozzleSales, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummNozzleSales,
+                    Remark,
+                    ADDED_BY
+                FROM
+                    tbl_meter_readings
+                WHERE
+                    Date BETWEEN '${fromDate}' AND '${toDate}'
+                ORDER BY
+                    Date ASC;
+                `);
                 return data;
             }
-            const data = await TblMeterReading.findAll({
-                where : searchObj,
-                order : [["Date", "ASC"]]
-            });
+            if (id) {
+                const [data] = await sequelize.query(`SELECT
+                    id,
+                    Date,
+                    Time,
+                    Density,
+                    Dip,
+                    WaterDip,
+                    Stock,
+                    OpeningStock,
+                    Receipt,
+                    TotalStock,
+                    ClosingStock,
+                    PhysicalStock,
+                    StockLossGain,
+                    SUM(COALESCE(StockLossGain, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummLossGain,
+                    Nozzle1,
+                    Nozzle2,
+                    Nozzle1Diff,
+                    Nozzle2Diff,
+                    TotalNozzleSales,
+                    Testing,
+                    ActualNozzleSales,
+                    SUM(COALESCE(ActualNozzleSales, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummNozzleSales,
+                    Remark,
+                    ADDED_BY
+                FROM
+                    tbl_meter_readings
+                WHERE
+                    id = '${id}'
+                ORDER BY
+                    Date ASC;
+                `);
+                return data;
+            }
+            const [data] = await sequelize.query(`SELECT
+                id,
+                Date,
+                Time,
+                Density,
+                Dip,
+                WaterDip,
+                Stock,
+                OpeningStock,
+                Receipt,
+                TotalStock,
+                ClosingStock,
+                PhysicalStock,
+                StockLossGain,
+                SUM(COALESCE(StockLossGain, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummLossGain,
+                Nozzle1,
+                Nozzle2,
+                Nozzle1Diff,
+                Nozzle2Diff,
+                TotalNozzleSales,
+                Testing,
+                ActualNozzleSales,
+                SUM(COALESCE(ActualNozzleSales, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummNozzleSales,
+                Remark,
+                ADDED_BY
+            FROM
+                tbl_meter_readings
+            WHERE
+                Date BETWEEN '${getYear}-${getMonth}-01' AND '${getYear}-${getMonth}-31'
+            ORDER BY
+                Date ASC;
+            `);
             return data;
         } catch (error) {
             console.log(error);
@@ -127,11 +214,11 @@ class Meter {
                 }
             });
 
-            const oneMorePreviousData = await TblMeterReading.findOne({
-                where : {
-                    id : id - 2
-                }
-            });
+            // const oneMorePreviousData = await TblMeterReading.findOne({
+            //     where : {
+            //         id : id - 2
+            //     }
+            // });
 
             if(previousData) {
                 const updatedData = await TblMeterReading.update(
@@ -139,12 +226,12 @@ class Meter {
                         ClosingStock : previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing),
                         PhysicalStock : Stock,
                         StockLossGain : Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
-                        CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        // CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
                         Nozzle1Diff : Nozzle1 - previousData.Nozzle1,
                         Nozzle2Diff : Nozzle2 - previousData.Nozzle2,
                         TotalNozzleSales : (Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2),
                         ActualNozzleSales : ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing,
-                        CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
+                        // CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
                     },
                     {
                         where : {
@@ -214,12 +301,12 @@ class Meter {
                         ClosingStock : previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing),
                         PhysicalStock : Stock,
                         StockLossGain : Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
-                        CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        // CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
                         Nozzle1Diff : Nozzle1 - previousData.Nozzle1,
                         Nozzle2Diff : Nozzle2 - previousData.Nozzle2,
                         TotalNozzleSales : (Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2),
                         ActualNozzleSales : ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing,
-                        CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
+                        // CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
                     },
                     {
                         where : {
@@ -243,21 +330,107 @@ class Meter {
             const getYear = new Date().getFullYear();
             searchObj.Date = { [Op.between] : [`${getYear}-${getMonth}-01`, `${getYear}-${getMonth}-31`] }
             if (fromDate && toDate) {
-                searchObj.Date = { [Op.between] : [fromDate, toDate] }
-            }
-            if (id) {
-                const data = await TblMeterReadingDiesel.findAll({
-                    where : {
-                        id : id
-                    },
-                    order : [["Date", "ASC"]]
-                });
+                const [data] = await sequelize.query(`SELECT
+                    id,
+                    Date,
+                    Time,
+                    Density,
+                    Dip,
+                    WaterDip,
+                    Stock,
+                    OpeningStock,
+                    Receipt,
+                    TotalStock,
+                    ClosingStock,
+                    PhysicalStock,
+                    StockLossGain,
+                    SUM(COALESCE(StockLossGain, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummLossGain,
+                    Nozzle1,
+                    Nozzle2,
+                    Nozzle1Diff,
+                    Nozzle2Diff,
+                    TotalNozzleSales,
+                    Testing,
+                    ActualNozzleSales,
+                    SUM(COALESCE(ActualNozzleSales, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummNozzleSales,
+                    Remark,
+                    ADDED_BY
+                FROM
+                    tbl_meter_reading_diesels
+                WHERE
+                    Date BETWEEN '${fromDate}' AND '${toDate}'
+                ORDER BY
+                    Date ASC;
+                `);
                 return data;
             }
-            const data = await TblMeterReadingDiesel.findAll({
-                where : searchObj,
-                order : [["Date", "ASC"]]
-            });
+            if (id) {
+                const [data] = await sequelize.query(`SELECT
+                    id,
+                    Date,
+                    Time,
+                    Density,
+                    Dip,
+                    WaterDip,
+                    Stock,
+                    OpeningStock,
+                    Receipt,
+                    TotalStock,
+                    ClosingStock,
+                    PhysicalStock,
+                    StockLossGain,
+                    SUM(COALESCE(StockLossGain, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummLossGain,
+                    Nozzle1,
+                    Nozzle2,
+                    Nozzle1Diff,
+                    Nozzle2Diff,
+                    TotalNozzleSales,
+                    Testing,
+                    ActualNozzleSales,
+                    SUM(COALESCE(ActualNozzleSales, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummNozzleSales,
+                    Remark,
+                    ADDED_BY
+                FROM
+                    tbl_meter_reading_diesels
+                WHERE
+                    id = '${id}'
+                ORDER BY
+                    Date ASC;
+                `);
+                return data;
+            }
+            const [data] = await sequelize.query(`SELECT
+                id,
+                Date,
+                Time,
+                Density,
+                Dip,
+                WaterDip,
+                Stock,
+                OpeningStock,
+                Receipt,
+                TotalStock,
+                ClosingStock,
+                PhysicalStock,
+                StockLossGain,
+                SUM(COALESCE(StockLossGain, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummLossGain,
+                Nozzle1,
+                Nozzle2,
+                Nozzle1Diff,
+                Nozzle2Diff,
+                TotalNozzleSales,
+                Testing,
+                ActualNozzleSales,
+                SUM(COALESCE(ActualNozzleSales, 0)) OVER (PARTITION BY EXTRACT(YEAR_MONTH FROM Date) ORDER BY Date) AS CummNozzleSales,
+                Remark,
+                ADDED_BY
+            FROM
+                tbl_meter_reading_diesels
+            WHERE
+                Date BETWEEN '${getYear}-${getMonth}-01' AND '${getYear}-${getMonth}-31'
+            ORDER BY
+                Date ASC;
+            `);
             return data;
         } catch (error) {
             console.log(error);
@@ -297,11 +470,11 @@ class Meter {
                 }
             });
 
-            const oneMorePreviousData = await TblMeterReadingDiesel.findOne({
-                where : {
-                    id : id - 2
-                }
-            });
+            // const oneMorePreviousData = await TblMeterReadingDiesel.findOne({
+            //     where : {
+            //         id : id - 2
+            //     }
+            // });
 
             if(previousData) {
                 const updatedData = await TblMeterReadingDiesel.update(
@@ -309,12 +482,12 @@ class Meter {
                         ClosingStock : previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing),
                         PhysicalStock : Stock,
                         StockLossGain : Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
-                        CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
+                        // CummLossGain : oneMorePreviousData ? oneMorePreviousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)) : previousData.CummLossGain + Stock - (previousData.TotalStock - (((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing)),
                         Nozzle1Diff : Nozzle1 - previousData.Nozzle1,
                         Nozzle2Diff : Nozzle2 - previousData.Nozzle2,
                         TotalNozzleSales : (Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2),
                         ActualNozzleSales : ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing,
-                        CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
+                        // CummNozzleSales : oneMorePreviousData ? oneMorePreviousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing : previousData.CummNozzleSales + ((Nozzle1 - previousData.Nozzle1) + (Nozzle2 - previousData.Nozzle2)) - previousData.Testing
                     },
                     {
                         where : {
@@ -338,6 +511,17 @@ class Meter {
                     id : id
                 }
             });
+            return data;
+        } catch (error) {
+            console.log(error);
+            return error;
+        }
+    };
+
+    getStockFromDip = async (req) => {
+        try {
+            const { dip } = req.query;
+            const [[data]] = await sequelize.query(`SELECT Stock FROM tbl_meter_readings WHERE Dip = ${dip} ORDER BY Date DESC`);
             return data;
         } catch (error) {
             console.log(error);

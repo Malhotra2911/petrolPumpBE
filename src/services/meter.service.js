@@ -40,6 +40,11 @@ const deleteMeterReadingDiesel = async (req) => {
     return data;
 }
 
+const getStockFromDip = async (req) => {
+    const data = await MeterCollection.getStockFromDip(req);
+    return data;
+}
+
 module.exports = {
     addMeterReading,
     getMeterReading,
@@ -48,5 +53,6 @@ module.exports = {
     addMeterReadingDiesel,
     getMeterReadingDiesel,
     editMeterReadingDiesel,
-    deleteMeterReadingDiesel
+    deleteMeterReadingDiesel,
+    getStockFromDip
 }

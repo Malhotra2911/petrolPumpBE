@@ -8,6 +8,7 @@ router.route("/add-meterReading").post(auth, meterController.addMeterReading);
 router.route("/get-meterReading").get(meterController.getMeterReading);
 router.route("/edit-meterReading").put(meterController.editMeterReading);
 router.route("/delete-meterReading").delete(meterController.deleteMeterReading);
+router.route("/get-stockFromDip").get(meterController.getStockFromDip);
 
 // diesel
 router.route("/add-meterReadingDiesel").post(auth, meterController.addMeterReadingDiesel);

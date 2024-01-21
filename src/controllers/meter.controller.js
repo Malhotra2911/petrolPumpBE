@@ -95,6 +95,17 @@ const deleteMeterReadingDiesel = catchAsync(async (req, res) => {
     });
 });
 
+const getStockFromDip = catchAsync(async (req, res) => {
+    const data = await meterService.getStockFromDip(req);
+    if(!data) {
+        throw new ApiError(httpStatus.NOT_FOUND, "!Something Went Wrong")
+    }
+    res.status(200).send({
+        status: true,
+        data: data
+    });
+});
+
 module.exports = {
     addMeterReading,
     getMeterReading,
@@ -103,5 +114,6 @@ module.exports = {
     addMeterReadingDiesel,
     getMeterReadingDiesel,
     editMeterReadingDiesel,
-    deleteMeterReadingDiesel
+    deleteMeterReadingDiesel,
+    getStockFromDip
 }
