@@ -2,6 +2,7 @@ const express = require("express");
 const meterRoutes = require("./meter.routes");
 const shiftEntryRoutes = require("./shiftEntry.routes");
 const userRoutes = require("./user.routes");
+const ttRoutes = require('./tt.routes');
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use((req, res, next) => {
 router.use('/meter', meterRoutes);
 router.use('/shiftEntry', shiftEntryRoutes);
 router.use('/user', userRoutes);
+router.use('/tt', ttRoutes);
 
 module.exports = router;

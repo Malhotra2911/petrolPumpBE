@@ -1,10 +1,10 @@
 const httpStatus = require("http-status");
-const { shiftEntryService } = require("../services");
+const { ttService } = require("../services");
 const ApiError = require("../utils/ApiError");
 const catchAsync = require("../utils/catchAsync");
 
-const addShiftEntry = catchAsync(async (req, res) => {
-    const data = await shiftEntryService.addShiftEntry(req);
+const addTT = catchAsync(async (req, res) => {
+    const data = await ttService.addTT(req);
     if(!data) {
         throw new ApiError(httpStatus.NOT_FOUND, "!Something Went Wrong");
     }
@@ -15,8 +15,8 @@ const addShiftEntry = catchAsync(async (req, res) => {
     });
 });
 
-const getShiftEntry = catchAsync(async (req, res) => {
-    const data = await shiftEntryService.getShiftEntry(req);
+const getTT = catchAsync(async (req, res) => {
+    const data = await ttService.getTT(req);
     if(!data) {
         throw new ApiError(httpStatus.NOT_FOUND, "!Something Went Wrong");
     }
@@ -26,8 +26,8 @@ const getShiftEntry = catchAsync(async (req, res) => {
     });
 });
 
-const editShiftEntry = catchAsync(async (req, res) => {
-    const data = await shiftEntryService.editShiftEntry(req);
+const editTT = catchAsync(async (req, res) => {
+    const data = await ttService.editTT(req);
     if(!data) {
         throw new ApiError(httpStatus.NOT_FOUND, "!Something Went Wrong");
     }
@@ -38,8 +38,8 @@ const editShiftEntry = catchAsync(async (req, res) => {
     });
 });
 
-const deleteShiftEntry = catchAsync(async (req, res) => {
-    const data = await shiftEntryService.deleteShiftEntry(req);
+const deleteTT = catchAsync(async (req, res) => {
+    const data = await ttService.deleteTT(req);
     if(!data) {
         throw new ApiError(httpStatus.NOT_FOUND, "!Something Went Wrong");
     }
@@ -50,8 +50,8 @@ const deleteShiftEntry = catchAsync(async (req, res) => {
 });
 
 module.exports = {
-    addShiftEntry,
-    getShiftEntry,
-    editShiftEntry,
-    deleteShiftEntry
+    addTT,
+    getTT,
+    editTT,
+    deleteTT
 }
