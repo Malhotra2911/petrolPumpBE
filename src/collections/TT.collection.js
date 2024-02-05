@@ -83,7 +83,27 @@ class TT {
 
     getTT = async (req) => {
         try {
-            const data = await TblTT.findAll();
+            let searchObj = {};
+            const { fromDate, toDate, id } = req.query;
+            // const getMonth = new Date().getMonth() + 1;
+            // const getYear = new Date().getFullYear();
+            // searchObj.ttDate = { [Op.between] : [`${getYear}-${getMonth}-01`, `${getYear}-${getMonth}-31`] }
+            if (fromDate && toDate) {
+                searchObj.ttDate = { [Op.between] : [fromDate, toDate] }
+            }
+            if (id) {
+                const data = await TblTT.findAll({
+                    where : {
+                        id : id
+                    },
+                    order : [["ttDate", "ASC"]]
+                });
+                return data;
+            }
+            const data = await TblTT.findAll({
+                where : searchObj,
+                order : [["ttDate", "ASC"]]
+            });
             return data;
         } catch (error) {
             console.log(error);
